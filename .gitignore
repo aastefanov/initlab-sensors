@@ -1,0 +1,6 @@
+.idea/
+.vscode
+node_modules/
+*.iml
+
+src/config.js
