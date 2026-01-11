@@ -31,8 +31,6 @@ function xiaomi(miKey) {
     return {parse};
 }
 
-// import ccm from "aes-ccm";
-
 const FRAME_CONTROL = {
     FACTORY_NEW: 0b1,
     CONNECTING: 0b10,
@@ -130,7 +128,6 @@ function readAll(data, key = undefined) {
 
         if (data.length < offset + 3) return null;
 
-        // if (frameControl & FRAME_CONTROL.IS_ENCRYPTED) result.eventRaw = buff.subarray(offset);
         if (result.frameControlFields & FRAME_CONTROL.IS_ENCRYPTED) result.event = readEventData(decrypt(key, data), 0);
         else result.event = readEventData(data, offset)
     }

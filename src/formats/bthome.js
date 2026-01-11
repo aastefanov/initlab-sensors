@@ -15,12 +15,6 @@ function bthome(bindKey) {
         /** @type BleMqttPacket */
         const message = JSON.parse(buffer.toString());
 
-        console.log(
-            Object.hasOwn(message.service_data, '0000181c-0000-1000-8000-00805f9b34fb'),
-            Object.hasOwn(message.service_data, '0000fcd2-0000-1000-8000-00805f9b34fb'),
-            Object.keys(message.service_data)[0],
-        )
-
         // unencrypted v1
         if(Object.hasOwn(message.service_data, '0000181c-0000-1000-8000-00805f9b34fb'))
             return bthomev1(bindKey).parse(topic, buffer);
@@ -29,7 +23,7 @@ function bthome(bindKey) {
             return bthomev1(bindKey).parse(topic, buffer);
         // v2
         else if (Object.hasOwn(message.service_data, '0000fcd2-0000-1000-8000-00805f9b34fb'))
-            return (bthomev2(bindKey).parse(topic, buffer));
+            return bthomev2(bindKey).parse(topic, buffer);
         else throw 'non-bthome advertisement';
     }
 

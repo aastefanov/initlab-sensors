@@ -87,9 +87,6 @@ const sensorMap = {
     0x52: ['gyroscope', x => x.readUInt16LE() / 1000,2],
     0x53: ['text', () => ''], // TODO: parse this
     0x54: ['raw', x => x.toString('hex')],
-    // ...Object.fromEntries(
-    //     Object.entries(boolMap).map(([c, m]) => [c, [m, x => x.readBoolean()]])
-    // )
 };
 
 export {boolMap, eventMap, sensorMap};
