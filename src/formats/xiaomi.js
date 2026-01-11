@@ -1,3 +1,5 @@
+import {createDecipheriv} from 'crypto'
+
 /**
  * @param {string?} miKey
  * @returns {Parser}
@@ -29,7 +31,7 @@ function xiaomi(miKey) {
     return {parse};
 }
 
-import ccm from "aes-ccm";
+// import ccm from "aes-ccm";
 
 const FRAME_CONTROL = {
     FACTORY_NEW: 0b1,
@@ -60,10 +62,23 @@ export function decrypt(key, data) {
         desc.mac, desc.productId, desc.counter, nonceKey
     ])
 
-    const decryptResult = ccm.decrypt(bindKey, nonce, payload, aad, authTag);
-    if (!decryptResult.auth_ok) console.error(`cannot decrypt packet for device ${desc.mac}`)
+    const cipher = createDecipheriv('aes-128-ccm', bindKey, nonce, {
+        authTagLength: 4,
+    });
 
-    return decryptResult.plaintext;
+    cipher.setAuthTag(authTag);
+    cipher.setAAD(aad, {plaintextLength: payload.length});
+
+    /** @type Buffer */
+    const received = cipher.update(payload, null);
+
+    try {
+        cipher.final();
+    } catch (e) {
+        console.error(`cannot decrypt xiaomi packet for device ${desc.mac}`)
+        return undefined;
+    }
+    return received;
 }
 
 const EVENT_ID = {

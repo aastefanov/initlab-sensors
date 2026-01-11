@@ -4,7 +4,7 @@ import {boolMap, eventMap, sensorMap} from './bthome_common.js';
  * @param {string?} bindKey
  * @returns {Parser}
  */
-function bthomev1(bindKey) {
+function bthomev2(bindKey) {
     /**
      * @param {string} topic
      * @param {Buffer} buffer
@@ -14,36 +14,37 @@ function bthomev1(bindKey) {
         /** @type BleMqttPacket */
         const message = JSON.parse(buffer.toString());
 
+        if (bindKey) throw 'not implemented';
+
         const packet =
-            Buffer.from(message.service_data['0000181c-0000-1000-8000-00805f9b34fb'], 'hex');
+            Buffer.from(message.service_data['0000fcd2-0000-1000-8000-00805f9b34fb'], 'hex');
 
         const packetLen = packet.length;
         const result = {};
 
-        let offset = 0;
+        const header = packet.readUInt8();
+        const encrypted = !!(header & 0b1);
+        const version = (header & 0b11100000) >> 5;
+
+        if (encrypted) throw 'not implemented';
+        if (version !== 2) throw 'not implemented';
+
+        let offset = 1;
         while (offset < packetLen - 1) {
             // TODO: actually read datatype instead of using the recommended one
-            const len = packet.readUInt8(offset++) & (0x00011111);
             const type = packet.readUInt8(offset++);
-            const data = packet.subarray(offset, offset += len + 1);
-
 
             if (boolMap.hasOwnProperty(type)) {
-                result[boolMap[type]] = !!data.readUInt8();
+                result[boolMap[type]] = !!packet.readUInt8(offset++);
             } else if (eventMap.hasOwnProperty(type)) {
-                const [entity, params] = eventMap[type];
-                // TODO: clean this up
-                if (Array.isArray(params)) { // has parser and attached values
-                    const [event, fun] = params[1];
-                    result[entity] = {event: event, value: fun(data)}
-                } else { // no attached values
-                    result[entity] = {event: params}
-                }
+                // todo: fix this
+                throw 'not implemented';
             } else if (sensorMap.hasOwnProperty(type)) {
-                const [measurement, fun] = sensorMap[type];
-                result[measurement] = fun(data);
+
+                const [measurement, fun, len] = sensorMap[type];
+                result[measurement] = fun(packet.subarray(offset, offset += len));
             } else {
-                console.warn(`undefined bthome property: ${type.toString(16)}`);
+                console.warn(`undefined bthome property: 0x${type.toString(16)}`);
             }
         }
 
@@ -58,4 +59,4 @@ function bthomev1(bindKey) {
     return {parse};
 }
 
-export default bthomev1;
+export default bthomev2;
